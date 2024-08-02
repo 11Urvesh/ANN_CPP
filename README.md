@@ -64,7 +64,7 @@ During each epoch, the network performs forward propagation to predict the rent,
 
 ## Functions
 
-### `initialize)`
+### `initialize`
 Initializes a 2D vector (matrix) with specified rows, columns, and initial value.
 
 ### `initialize_parameters`
