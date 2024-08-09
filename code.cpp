@@ -1,6 +1,8 @@
+#include <fstream>
 #include <sstream>
 #include <iostream>
-#include <bits/stdc++.h>
+#include <unordered_map>
+#include <vector>
 using namespace std;
 
 // Initializing vectors
@@ -11,89 +13,94 @@ vector<vector<double>> initialize(int rows, int cols, double value)
 }
 
 // Function to initialize parameters
-void initialize_parameters(vector<int> layer_dims,unordered_map<string, vector<vector<double>>> &parameters) 
+void initialize_parameters(vector<int> layer_dims, unordered_map<string, vector<vector<double>>> &parameters) 
 {
     int L = layer_dims.size();
-
-    for (int l = 1; l < L; ++l) {
-        parameters["W" + to_string(l)] = initialize(layer_dims[l-1], layer_dims[l],0.1);
+    for (int l = 1; l < L; ++l) 
+    {
+        parameters["W" + to_string(l)] = initialize(layer_dims[l], layer_dims[l-1], 0.1);
         parameters["b" + to_string(l)] = initialize(layer_dims[l], 1, 0.0);
     }
 }
 
 vector<vector<double>> linear_forward(vector<vector<double>>&A_prev, vector<vector<double>>&W, vector<vector<double>>&b) 
 {
-    // Transpose of W
-    vector<vector<double>> W_T(W[0].size(), vector<double>(W.size()));
+    vector<vector<double>> Z(W.size(), vector<double>(A_prev[0].size(), 0.0));
     
+    // Matrix multiplication W * A_prev
     for (int i = 0; i < W.size(); ++i) 
-    {
-        for (int j = 0; j < W[0].size(); ++j) 
-        {
-            W_T[j][i] = W[i][j];
-        }
-    }
-    
-    
-    // dot product [Transpose(W).A_prev]
-    vector<vector<double>> Z(W_T.size(), vector<double>(A_prev[0].size(), 0.0));
-    
-    for (int i = 0; i < W_T.size(); ++i) 
     {
         for (int j = 0; j < A_prev[0].size(); ++j) 
         {
-            for (int k = 0; k < A_prev.size(); ++k) 
+            for (int k = 0; k < W[0].size(); ++k) 
             {
-                Z[i][j] += W_T[i][k] * A_prev[k][j];
+                Z[i][j] += W[i][k] * A_prev[k][j];
             }
         }
     }
     
-    // Addind Bias to the result 
+    // Adding bias 
     for (int i = 0; i < Z.size(); ++i) 
     {
         for (int j = 0; j < Z[0].size(); ++j) 
         {
-            Z[i][j] += b[i][0];
+            Z[i][j] += b[i][0];  
         }
     }
 
     return Z;
 }
 
-pair<vector<vector<double>>,vector<vector<double>>> L_layer_forward(vector<vector<double>> A_prev, unordered_map<string, vector<vector<double>>> &parameters,int layers) 
+pair<vector<vector<double>>, vector<vector<vector<double>>>> L_layer_forward(vector<vector<double>> A_prev, unordered_map<string, vector<vector<double>>> &parameters, int layers) 
 {
     vector<vector<double>> A = A_prev;
-    int L = layers;
-
-    for (int l = 1; l < L; ++l) 
+    vector<vector<vector<double>>> cache;
+    cache.push_back(A_prev);
+    
+    for (int l = 1; l < layers; ++l) 
     {
         A_prev = A;
         vector<vector<double>> W = parameters["W" + to_string(l)];
         vector<vector<double>> b = parameters["b" + to_string(l)];
         A = linear_forward(A_prev, W, b);
+        cache.push_back(A);
     }
 
-    return {A,A_prev};
+    return {A, cache};
 }
 
-void update_parameters(unordered_map<string, vector<vector<double>>> &parameters,vector<vector<double>> &A1,vector<vector<double>>&X,const double error)
+void update_parameters(unordered_map<string, vector<vector<double>>> &parameters, const vector<vector<vector<double>>> &cache, const vector<vector<double>> &X, double error, int layer, double learning_rate = 0.001) 
 {
-    parameters["W2"][0][0] += (0.001 * 2 * (error) * A1[0][0]);
-    parameters["W2"][1][0] += (0.001 * 2 * (error) * A1[1][0]);
-    parameters["b2"][0][0] += (0.001 * 2 * (error));
+    // Update current layer parameters
+    vector<vector<double>> &W = parameters["W" + to_string(layer)];
+    vector<vector<double>> &b = parameters["b" + to_string(layer)];
+    const vector<vector<double>> &A_prev = (layer == 1) ? X : cache[layer - 1];
     
-    parameters["W1"][0][0] += (0.001 * 2 * (error) * parameters["W2"][0][0] * X[0][0]);
-    parameters["W1"][0][1] += (0.001 * 2 * (error) * parameters["W2"][0][0] * X[1][0]);
-    parameters["W1"][0][2] += (0.001 * 2 * (error) * parameters["W2"][0][0] * X[2][0]);
-    parameters["b1"][0][0] += (0.001 * 2 * (error) * parameters["W2"][0][0]);
-    
-    parameters["W1"][1][0] += (0.001 * 2 * (error) * parameters["W2"][1][0] * X[0][0]);
-    parameters["W1"][1][1] += (0.001 * 2 * (error) * parameters["W2"][1][0] * X[1][0]);
-    parameters["W1"][1][2] += (0.001 * 2 * (error) * parameters["W2"][1][0] * X[2][0]);
-    parameters["b1"][1][0] += (0.001 * 2 * (error) * parameters["W2"][1][0]);
-}
+    for (int i = 0; i < W.size(); ++i) 
+    {
+        for (int j = 0; j < W[0].size(); ++j) 
+        {
+            W[i][j] += learning_rate * 2 * error * A_prev[j][0];
+        }
+        b[i][0] += learning_rate * 2 * error;
+    }
 
+    if (layer > 1) 
+    {
+        // Calculate the propagated error for the previous layer
+        vector<double> propagated_error(W[0].size(), 0.0);
+        for (int j = 0; j < W[0].size(); ++j) 
+        {
+            for (int i = 0; i < W.size(); ++i) 
+            {
+                propagated_error[j] += error * W[i][j];
+            }
+        }
+
+        // Recur for the previous layer
+        update_parameters(parameters, cache, X, propagated_error[0], layer - 1, learning_rate);
+    }
+}
 
 int main()
 {
@@ -123,47 +130,31 @@ int main()
         return 0;
     }
     
-    /*
-    Dataset Explanation : 
-    
-    Number of Bedrooms: The first value in each sub-vector.
-    Size (sq ft/1000): The second value in each sub-vector.
-    Location: The third value in each sub-vector, encoded as Urban = 1, Suburban = 2, Rural = 3.
-    Rent (INR/10000): The fourth value in each sub-vector.
-    
-    */
-    
-    vector<int> layer_dims = {3, 2, 1};
+    vector<int> layer_dims = {3, 2, 2, 1};
     int layers = layer_dims.size();
     unordered_map<string, vector<vector<double>>> parameters;
-    initialize_parameters(layer_dims,parameters);
+    initialize_parameters(layer_dims, parameters);
     
-    int epochs = 20;
+    int epochs = 50;
     double loss_sum;
     
     for(int e = 1; e <= epochs; e++)
     {
         loss_sum = 0.0;
         
-        for(int d = 0; d < Dataset.size();d++)
+        for(int d = 0; d < Dataset.size(); d++)
         {
-            vector<vector<double>> X = {{Dataset[d][0]},{Dataset[d][1]},{Dataset[d][2]}};
+            vector<vector<double>> X = {{Dataset[d][0]}, {Dataset[d][1]}, {Dataset[d][2]}};
             double Y = Dataset[d][3];
             
-            pair<vector<vector<double>>,vector<vector<double>>>results = L_layer_forward(X,parameters,layers); // pair{y_hat,A1}
-            
+            pair<vector<vector<double>>, vector<vector<vector<double>>>> results = L_layer_forward(X, parameters, layers); // pair{y_hat, cache}
             double error = Y - results.first[0][0];
-            update_parameters(parameters,results.second,X,error);
-            
-            loss_sum += (error*error); // MSE - Loss Function 
+            update_parameters(parameters, results.second, X, error, layers-1);
+            loss_sum += (error * error); // MSE - Loss Function 
         }
         
-        cout<<"Epoch:"<<e<<", Loss: "<<(loss_sum/Dataset.size())<<endl;
+        cout << "Epoch:" << e << ", Loss: " << (loss_sum / Dataset.size()) << endl;
     }
     
     return 0;
 }
-
-
-
-
