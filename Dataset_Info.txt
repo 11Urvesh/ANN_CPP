@@ -1,4 +1,3 @@
 Dataset 
 Input Features : seller_type,bedroom,layout_type,property_type,locality,area,furnish_type,bathroom
 Output Features: price
-
