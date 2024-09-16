@@ -1,6 +1,6 @@
-# Linear Regression Neural Network
+# Artificial Neural Network in CPP For Linear Regression
 
-This project implements a simple linear regression neural network model using C++. The code reads a dataset from a file, initializes network parameters, performs forward propagation, calculates errors, and updates parameters to minimize the loss function over multiple epochs.
+This project implements a neural network (ANN) model using C++ (including OOps concepts) to solve a regression problem (eg. [Pune House Rent Prediction](https://www.kaggle.com/datasets/rahulmishra5/pune-house-rent-prediction)). The code reads a dataset from a csv file, initializes network parameters, performs forward propagation, calculates errors, and updates parameters to minimize the loss function over multiple epochs.
 
 ## Table of Contents
 - [Installation](#installation)
@@ -11,42 +11,36 @@ This project implements a simple linear regression neural network model using C+
 
 ## Installation
 
-To compile and run the code, ensure you have a C++ compiler installed on your system. The code also requires the `data.txt` file to be present in the same directory.
+To compile and run the code, ensure you have a C++ compiler installed on your system. The code also requires the `data_file.csv` file to be present in the same directory.
 
 ### Compilation
 ```sh
-g++ -o linear_regression_nn linear_regression_nn.cpp
+g++ main.cpp Dataset.cpp ANN.cpp -o my_program
 ```
 
 ### Running
 ```sh
-./linear_regression_nn
+./my_program
 ```
 
 ## Usage
 
-The program reads a dataset from `data.txt`, initializes the neural network parameters, trains the network over a specified number of epochs, and prints the loss at each epoch.
+The program reads a dataset from `data_file.csv` file, initializes the network parameters, trains the network over a given number of epochs, and prints the loss at each epoch.
 
 ## Code Explanation
 
 ### Dataset
-The dataset should be in a file named `data.txt` with the following structure:
+The dataset should be in a file named `file_name.csv` with the following structure:
 
 ```
-3 1.2 1 5.0
-2 0.8 2 3.5
-4 1.5 1 6.0
+3,1.2,1,5.0
+2,0.8,2,3.5
+4,1.5,1,6.0
 ...
 ```
 
-Each line in the file represents a data point with:
-- Number of Bedrooms
-- Size (sq ft/1000) ...(feature scalling applied)
-- Location (encoded as Urban = 1, Suburban = 2, Rural = 3)
-- Rent (INR/10000)  ...(feature scalling applied)
-
 ### Initialization
-The network is initialized with a specified layer structure, for example:
+The network can be initialized with a given (user-defined) layer structure., for example:
 ```cpp
 vector<int> layer_dims = {3, 2, 1};
 ```
@@ -56,7 +50,7 @@ This indicates:
 - Output layer with 1 neuron
 
 ### Training
-The network is trained for a specified number of epochs (iterations over the dataset):
+The network can be trained for given (user-defined) number of epochs (iterations over the dataset):
 ```cpp
 int epochs = 20;
 ```
