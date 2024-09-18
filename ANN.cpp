@@ -1,19 +1,24 @@
 #include "ANN.h"
+#include "Dataset.h"
 
-ANN :: ANN()
+ANN :: ANN(Dataset dataset)
 {
-    cout<<"Enter the number of layers you want in ANN : ";
+    cout<<endl<<"Enter the number of layers you want in ANN : ";
     cin>>layers;
 
     if(layers <= 1) throw string("Layers can't be less than two !");
 
-    cout<<"*** Enter the number of neurons in each layer ***"<<endl;
+    cout<<endl<<"Enter the number of neurons in each layer :"<<endl;
 
     for(int i = 0; i < layers; i++)
     {
         int neurons;
         cout<<"Layer "<<i+1<<" : ";
         cin>>neurons;
+
+        if(i == 0 && neurons != dataset.getFeatureCount()-1) 
+            throw string("Number of neurons in the first layer should be equal to the number of features in the dataset: "+to_string(dataset.getFeatureCount()-1));
+        
         if(neurons <= 0) throw string("Neurons can't be less than zero !");
         layer_dims.push_back(neurons);
     }
@@ -107,4 +112,49 @@ void ANN :: update_parameters(vector<vector<vector<double>>> &cache,vector<vecto
         // Recur for the previous layer
         update_parameters(cache, X, propagated_error[0], layer - 1, learning_rate);
     }
+}
+
+void ANN :: train(Dataset &train_data, int epochs)
+{
+    cout<<endl;
+    
+    double loss_sum;
+    for(int e = 1; e <= epochs; e++)
+    {
+        loss_sum = 0.0;
+        for(int d = 0; d < train_data.getEntries(); d++)
+        {
+            vector<vector<double>> X;
+            double Y;
+            train_data.getx(X,d);
+            train_data.gety(Y,d);
+            
+            pair<vector<vector<double>>, vector<vector<vector<double>>>> results = L_layer_forward(X); 
+            double error = Y - results.first[0][0];
+            update_parameters(results.second, X, error, getLayers()-1);
+            loss_sum += (error * error); // MSE - Loss Function 
+        }
+        
+        cout << "Epoch:" << e << ", Training Loss: " << (loss_sum / train_data.getEntries()) << endl;
+    }
+}
+
+void ANN :: test(Dataset &test_data)
+{
+    double test_loss_sum = 0.0;
+
+        for(int d = 0; d < test_data.getEntries(); d++)
+        {
+            vector<vector<double>> X;
+            double Y;
+            test_data.getx(X,d);
+            test_data.gety(Y,d);
+            
+            pair<vector<vector<double>>, vector<vector<vector<double>>>> results = L_layer_forward(X); 
+            double error = Y - results.first[0][0];
+            update_parameters(results.second, X, error, getLayers()-1);
+            test_loss_sum += (error * error); // MSE - Loss Function 
+        }
+        
+        cout <<endl<<"Test Loss: " << (test_loss_sum / test_data.getEntries()) << endl;
 }

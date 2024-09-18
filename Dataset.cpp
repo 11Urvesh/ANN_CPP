@@ -23,7 +23,23 @@ void Dataset :: loadData()
     file.close();
 }
 
-int Dataset :: size()
+void Dataset :: splitData(Dataset &train_data, Dataset &test_data, double split_ratio)
+{
+    int train_size = data.size() * split_ratio;
+    int test_size = data.size() - train_size;
+
+    shuffle(data.begin(), data.end(), default_random_engine(1));
+
+    train_data.data = vector<vector<double>>(data.begin(), data.begin() + train_size);
+    test_data.data = vector<vector<double>>(data.begin() + train_size, data.end());
+}
+
+int Dataset :: getFeatureCount()
+{
+    return data[0].size();
+}
+
+int Dataset :: getEntries()
 {
     return data.size();
 }

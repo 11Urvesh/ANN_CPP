@@ -6,6 +6,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <random>
 using namespace std;
 
 class Dataset
@@ -14,9 +16,14 @@ class Dataset
         vector<vector<double>> data;
     public:
         void loadData();
-        int size();
+        int getFeatureCount();
+        int getEntries();
         void getx(vector<vector<double>> &X,int &row);
         void gety(double &Y,int &row);
+        void splitData(Dataset &train_data, Dataset &test_data, double split_ratio);
+        friend class ANN;
+
+        // All methods are defined in Dataset.cpp (MVC Architecture)
 };
 
 #endif // DATASET_H

@@ -5,36 +5,34 @@ using namespace std;
 
 int main()
 {
-    cout<<"******************* Welcome to ANN.cpp project *******************"<<endl;
+    cout<<endl<<"******************* Welcome to ANN.cpp project *******************"<<endl;
     try
     {
         Dataset dataset;
+        Dataset train_data;
+        Dataset test_data;
+    
         dataset.loadData();
+        dataset.splitData(train_data, test_data, 0.8);
 
-        ANN model;
-        int count = 0;
-        int epochs = 10;
-        double loss_sum;
+        ANN model(dataset);
+
+        int epochs;
+        cout<<endl<<"Enter the number of epochs: ";
+        cin>>epochs;
+
+        if(epochs <= 0) throw string("Epochs can't be less than one !");
+
+        cout<<endl<<"***********Training the model***********"<<endl;
         
-        for(int e = 1; e <= epochs; e++)
-        {
-            loss_sum = 0.0;
-            for(int d = 0; d < dataset.size(); d++)
-            {
-                vector<vector<double>> X;
-                double Y;
-                dataset.getx(X,d);
-                dataset.gety(Y,d);
-                count++;
-                
-                pair<vector<vector<double>>, vector<vector<vector<double>>>> results = model.L_layer_forward(X); 
-                double error = Y - results.first[0][0];
-                model.update_parameters(results.second, X, error, model.getLayers()-1);
-                loss_sum += (error * error); // MSE - Loss Function 
-            }
-            
-            cout << "Epoch:" << e << ", Loss: " << (loss_sum / dataset.size()) << endl;
-        }
+        model.train(train_data, epochs);
+
+        cout<<endl<<"***********Testing the model***********"<<endl;
+
+        model.test(test_data);
+
+        cout<<endl<<"******************* ANN.cpp project completed *******************"<<endl;
+
     }
     catch(const string e)
     {
