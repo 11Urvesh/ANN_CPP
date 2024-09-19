@@ -24,6 +24,8 @@ class ANN
         void update_parameters(vector<vector<vector<double>>> &cache,vector<vector<double>> &X, double error, int layer, double learning_rate = 0.001);
         void train(Dataset &train_data, int epochs);
         void test(Dataset &test_data);
+        void load(string filename);
+        void save(string filename);
 
         // All methods are defined in ANN.cpp (MVC Architecture)
 };

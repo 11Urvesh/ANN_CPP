@@ -20,6 +20,7 @@ ANN :: ANN(Dataset dataset)
             throw string("Number of neurons in the first layer should be equal to the number of features in the dataset: "+to_string(dataset.getFeatureCount()-1));
         
         if(neurons <= 0) throw string("Neurons can't be less than zero !");
+
         layer_dims.push_back(neurons);
     }
 
@@ -28,6 +29,40 @@ ANN :: ANN(Dataset dataset)
         parameters["W" + to_string(l)] = vector<vector<double>>(layer_dims[l], vector<double>(layer_dims[l-1], 0.1)); 
         parameters["b" + to_string(l)] = vector<vector<double>>(layer_dims[l], vector<double>(1, 0.0));
     } 
+}
+
+void ANN :: load(string filename)
+{
+    int rows, cols;
+    ifstream inFile(filename, ios::binary);
+
+    if (!inFile.is_open()) 
+    {
+        throw string("Error opening file for reading!");
+    }
+
+    for (int l = 1; l < layers; ++l) 
+    { 
+        inFile.read((char*)(&rows), sizeof(rows));
+        inFile.read((char*)(&cols), sizeof(cols));
+
+        for (auto& row : parameters["W" + to_string(l)]) 
+        {
+            inFile.read((char*)(row.data()), row.size() * sizeof(double));
+        }
+
+        inFile.read((char*)(&rows), sizeof(rows));
+        inFile.read((char*)(&cols), sizeof(cols));
+
+        for (auto& row : parameters["b" + to_string(l)]) 
+        {
+            inFile.read((char*)(row.data()), row.size() * sizeof(double));
+        }
+    } 
+
+    cout << "Weights successfully loaded from " << filename << endl;
+
+    inFile.close();
 }
 
 int ANN :: getLayers()
@@ -157,4 +192,46 @@ void ANN :: test(Dataset &test_data)
         }
         
         cout <<endl<<"Test Loss: " << (test_loss_sum / test_data.getEntries()) << endl;
+}
+
+void ANN :: save(string filename)
+{
+    ofstream outFile(filename, ios::binary);
+
+    if (!outFile.is_open()) {
+        cerr << "Error opening file for writing!" << endl;
+        return;
+    }
+   
+    int rows,cols;
+    
+    for(int l = 1; l < layers; ++l)
+    {
+        
+        rows = parameters["W" + to_string(l)].size();
+        cols = parameters["W" + to_string(l)][0].size();
+        
+        outFile.write((const char*)(&rows), sizeof(rows));
+        outFile.write((const char*)(&cols), sizeof(cols));
+
+        for (const auto& row : parameters["W" + to_string(l)]) 
+        {
+            outFile.write((const char*)(row.data()), row.size() * sizeof(double));
+        }
+
+        rows = parameters["b" + to_string(l)].size();
+        cols = parameters["b" + to_string(l)][0].size();
+        
+        outFile.write((const char*)(&rows), sizeof(rows));
+        outFile.write((const char*)(&cols), sizeof(cols));
+
+        for (const auto& row : parameters["b" + to_string(l)]) 
+        {
+            outFile.write((const char*)(row.data()), row.size() * sizeof(double));
+        }
+    }
+
+    outFile.close();
+
+    cout << "Weights successfully stored in " << filename << endl;
 }

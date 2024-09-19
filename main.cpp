@@ -17,6 +17,8 @@ int main()
 
         ANN model(dataset);
 
+        // model.load("model_weights.bin");
+
         int epochs;
         cout<<endl<<"Enter the number of epochs: ";
         cin>>epochs;
@@ -30,6 +32,8 @@ int main()
         cout<<endl<<"***********Testing the model***********"<<endl;
 
         model.test(test_data);
+
+        // model.save("model_weights.bin");
 
         cout<<endl<<"******************* ANN.cpp project completed *******************"<<endl;
 
